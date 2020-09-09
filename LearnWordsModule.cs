@@ -109,13 +109,13 @@ namespace FreeTalkPlugin
             var key = Environment.GetEnvironmentVariable("YAHOO_API_KEY");
             var t = n.Text;
 
-            var now = DateTimeOffset.UtcNow.Ticks;
+            var now = DateTimeOffset.UtcNow;
 
             var myStorage = core.GetMyStorage();
-            var last = myStorage.Get("freetalk.lastLearnedAt", 0);
+            var last = myStorage.Get("freetalk.lastLearnedAt", DateTimeOffset.MinValue);
 
             // 前回学習から30秒経過していなければ学習しない
-            if (new TimeSpan(now - last).TotalSeconds < 30) return false;
+            if ((now - last).TotalSeconds < 30) return false;
 
             // 本文無し / メンションを含む / NGワードを含む　なら学習しない
             if (t == null || t.ContainsMentions() || ContainsNgWord(t)) return false;
