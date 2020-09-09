@@ -13,6 +13,8 @@ BotBone 1.1.0 と Citrine が必要。
 
 bin/Debug/netstandard2.1/FreeTalkPlugin.dll を BotBone の plugins フォルダに入れる
 
+`YAHOO_API_KEY` 環境変数に、Yahoo! Japan Developer Network の開発者キーを入れて BotBone を実行すること
+
 ## LICENSE
 
 [MIT ライセンス](LICENSE)
