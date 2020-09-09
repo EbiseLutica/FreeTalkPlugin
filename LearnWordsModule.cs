@@ -75,6 +75,14 @@ namespace FreeTalkPlugin
             var key = Environment.GetEnvironmentVariable("YAHOO_API_KEY");
             var t = n.Text;
 
+            var now = DateTimeOffset.UtcNow.Ticks;
+
+            var myStorage = core.GetMyStorage();
+            var last = myStorage.Get("freetalk.lastLearnedAt", 0);
+
+            // 前回学習から30秒経過していなければ学習しない
+            if (new TimeSpan(now - last).TotalSeconds < 30) return false;
+
             // 本文無し / メンションを含む / NGワードを含む　なら学習しない
             if (t == null || t.ContainsMentions() || ContainsNgWord(t)) return false;
             // フォロワー限定/ダイレクトなどであれば学習しない
@@ -97,8 +105,10 @@ namespace FreeTalkPlugin
                 ("sentence", t),
                 ("response", "feature")
             )));
+            
             var text = await res.Content.ReadAsStringAsync();
             var doc = XDocument.Parse(text);
+            myStorage.Set("freetalk.lastLearnedAt", now);
 
             // XML を解析しデータ処理
             (string? surface, string? reading, string? pos, string? baseform, string? group1, string? group2)[] result = doc.Descendants("{urn:yahoo:jp:jlp}word")
@@ -117,7 +127,6 @@ namespace FreeTalkPlugin
                     );
                 }).ToArray();
 
-            var myStorage = core.GetMyStorage();
             var nouns = myStorage.Get("freetalk.nouns", new List<string>()).ToList();
             var verbs = myStorage.Get("freetalk.verbs", new List<string>()).ToList();
             var adjectives = myStorage.Get("freetalk.adjectives", new List<string>()).ToList();
