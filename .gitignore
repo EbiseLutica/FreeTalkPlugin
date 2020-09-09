@@ -1,0 +1,9 @@
+bin/*
+!bin/Debug
+bin/Debug/*
+!bin/Debug/netstandard2.1
+bin/Debug/netstandard2.1/*
+!bin/Debug/netstandard2.1/publish
+bin/Debug/netstandard2.1/publish/*
+!bin/Debug/netstandard2.1/publish/FreeTalkPlugin.dll
+obj
