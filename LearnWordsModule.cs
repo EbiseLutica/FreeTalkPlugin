@@ -35,7 +35,6 @@ namespace FreeTalkPlugin
             NgWords = new HarassmentHandlerModule().NgWords.ToList();
             // 1時間に1投稿
             timer = new Timer(1000 * 60 * 60);
-            timer.Interval = 1000;
             timer.Elapsed += OnElapsed;
             timer.Start();
         }
