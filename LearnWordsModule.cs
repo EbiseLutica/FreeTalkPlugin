@@ -17,7 +17,7 @@ namespace FreeTalkPlugin
     {
         public List<string> NgWords { get; }
 
-        public string Name => "generate-free-talk";
+        public string Name => "free-talk";
 
         public string[] Aliases => new string[0];
 
@@ -25,18 +25,19 @@ namespace FreeTalkPlugin
 
         public PermissionFlag Permission => PermissionFlag.Any;
 
-        public string Usage => "/generate-free-talk";
+        public string Usage => "/free-talk gen\n　Generate a text\n/free-talk config get <key>\n/free-talk config set <key> <value>";
 
-        public string Description => "フリートークの文字列を生成します。";
+        public string Description => "FreeTalkPlugin Utility Command for administrators.";
 
         public LearnWordsModule()
         {
             // 下ネタ回避のために Citrine を参照する
             NgWords = new HarassmentHandlerModule().NgWords.ToList();
-            // 1時間に1投稿
-            timer = new Timer(1000 * 60 * 60);
+            // 15分に1投稿
+            timer = new Timer(1000 * 60 * 15);
             timer.Elapsed += OnElapsed;
             timer.Start();
+            logger.Info($"Installed LearnWordsModule with {Topics.Length} sentences");
         }
 
         public async Task<string> OnActivatedAsync(ICommandSender sender, Server core, IShell shell, string[] args, string body)
@@ -44,7 +45,41 @@ namespace FreeTalkPlugin
             this.shell = this.shell ?? shell;
             this.core = this.core ?? core;
 
-            return MapVariables(GenerateText());
+            var subCommand = args.Length >= 1 ? args[0] : throw new CommandException();
+            var myStorage = core.GetMyStorage();
+            switch (subCommand.ToLowerInvariant())
+            {
+                case "gen":
+                case "generate":
+                    return MapVariables(GenerateText());
+                case "zoniac":
+                    return GetJapaneseZodiacOf(DateTime.Now.Year);
+                case "config":
+                    {
+                        var getset = args.Length >= 2 ? args[1].ToLowerInvariant() : throw new CommandException();
+                        var key = args.Length >= 3 ? args[2] : throw new CommandException();
+                        var value = args.Length >= 4 ? args[3] : throw new CommandException();
+
+                        switch (key.ToLowerInvariant())
+                        {
+                            // case "timerinterval":
+                            //     if (getset == "set")
+                            //     {
+                            //         if (int.TryParse(value, out var i))
+                            //         {
+                            //             myStorage.Set("freetalk.config.timerInterval", i);
+                            //             return "ok";
+                            //         }
+                            //         return "interger value is required";
+                            //     }
+                            //     return myStorage.Get("freetalk.config.timerInterval", 0).ToString();
+                            default:
+                                return $"{key} is not a valid sub-command";
+                        }
+                    }
+                default:
+                    throw new CommandException();
+            }
         }
 
         private async void OnElapsed(object sender, ElapsedEventArgs e)
@@ -63,7 +98,7 @@ namespace FreeTalkPlugin
             await shell.PostAsync(MapVariables(s));
 
             recent.Add(s);
-            storage.Set("freetalk.recent", recent.TakeLast(100).ToList());
+            storage.Set("freetalk.recent", recent.TakeLast(50).ToList());
         }
 
         public override async Task<bool> OnTimelineAsync(IPost n, IShell shell, Server core)

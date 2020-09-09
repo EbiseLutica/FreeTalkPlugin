@@ -263,5 +263,18 @@ namespace FreeTalkPlugin
             "今年の目標は,$noun$を$verb$ことです",
         };
 
+        public static readonly int Length = 
+            Topics.AutumnSeason.Length +
+            Topics.Generics.Length +
+            Topics.HalloweenSeason.Length +
+            Topics.HolidaySeason.Length +
+            Topics.NewYearSeason.Length +
+            Topics.RainySeason.Length +
+            Topics.SpringSeason.Length +
+            Topics.SummerSeason.Length +
+            Topics.TanabataSeason.Length +
+            Topics.WinterSeason.Length +
+            Topics.YearEndSeason.Length;
+
     }
 }
