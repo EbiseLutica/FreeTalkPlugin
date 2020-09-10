@@ -54,6 +54,8 @@ namespace FreeTalkPlugin
                     return MapVariables(GenerateText());
                 case "zoniac":
                     return GetJapaneseZodiacOf(DateTime.Now.Year);
+                case "word":
+                    return string.Join(", ", GenerateChoices(myStorage));
                 case "config":
                     {
                         var getset = args.Length >= 2 ? args[1].ToLowerInvariant() : throw new CommandException();
@@ -96,8 +98,8 @@ namespace FreeTalkPlugin
             var lastSnackTimeAt = storage.Get("freetalk.lastSnackTimeAt", DateTime.MinValue.Date);
             var lastDinnerAt = storage.Get("freetalk.lastDinnerAt", DateTime.MinValue.Date);
             // ごはん投票は、毎tickごと抽選する
-            // 1%の確率で当選し、アンケートする
-            var win = core.Random.Next(100) == 0;
+            // 10%の確率で当選し、アンケートする
+            var win = core.Random.Next(100) <= 10;
 
             if (win && lastBreakfastAt != today && hour >= 7 && hour <= 10)
             {
