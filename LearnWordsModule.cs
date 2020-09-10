@@ -34,7 +34,7 @@ namespace FreeTalkPlugin
             // 下ネタ回避のために Citrine を参照する
             NgWords = new HarassmentHandlerModule().NgWords.ToList();
             // 15分に1投稿
-            timer = new Timer(1000 * 60 * 15);
+            timer = new Timer(1000 * 60 * 30);
             timer.Elapsed += OnElapsed;
             timer.Start();
             logger.Info($"Installed LearnWordsModule with {Topics.Length} sentences");
@@ -98,7 +98,7 @@ namespace FreeTalkPlugin
             await shell.PostAsync(MapVariables(s));
 
             recent.Add(s);
-            storage.Set("freetalk.recent", recent.TakeLast(50).ToList());
+            storage.Set("freetalk.recent", recent.TakeLast(Topics.Generics.Length).ToList());
         }
 
         public override async Task<bool> OnTimelineAsync(IPost n, IShell shell, Server core)
