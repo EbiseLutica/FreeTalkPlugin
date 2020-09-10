@@ -84,21 +84,70 @@ namespace FreeTalkPlugin
 
         private async void OnElapsed(object sender, ElapsedEventArgs e)
         {
-            if (shell == null) return;
-            var storage = core?.GetMyStorage();
-            if (storage == null) return;
+            if (shell == null || core == null) return;
+            var storage = core.GetMyStorage();
 
             var recent = storage.Get("freetalk.recent", new List<string>());
-            string s;
-            do
+            var now = DateTime.Now;
+            var today = now.Date;
+            var hour = now.Hour;
+            var lastBreakfastAt = storage.Get("freetalk.lastBreakfastAt", DateTime.MinValue.Date);
+            var lastLunchAt = storage.Get("freetalk.lastLunchAt", DateTime.MinValue.Date);
+            var lastSnackTimeAt = storage.Get("freetalk.lastSnackTimeAt", DateTime.MinValue.Date);
+            var lastDinnerAt = storage.Get("freetalk.lastDinnerAt", DateTime.MinValue.Date);
+            // ごはん投票は、毎tickごと抽選する
+            // 1%の確率で当選し、アンケートする
+            var win = core.Random.Next(100) == 0;
+
+            if (win && lastBreakfastAt != today && hour >= 7 && hour <= 10)
             {
-                s = GenerateText();
-            } while (recent.Contains(s));
+                await shell.PostAsync("朝ごはんどうしよ", choices: GenerateChoices(storage));
+                storage.Set("freetalk.lastBreakfastAt", now.Date);
+            }
+            else if (win && lastLunchAt != today && hour >= 11 && hour <= 13)
+            {
+                await shell.PostAsync("昼ごはんが決まらないので投票", choices: GenerateChoices(storage));
+                storage.Set("freetalk.lastLunchAt", now.Date);
+            }
+            else if (win && lastSnackTimeAt != today && hour == 15)
+            {
+                await shell.PostAsync("おやつの時間〜. 何食べよう", choices: GenerateChoices(storage));
+                storage.Set("freetalk.lastSnackTimeAt", now.Date);
+            }
+            else if (win && lastLunchAt != today && hour >= 17 && hour <= 19)
+            {
+                await shell.PostAsync("夜, 何食べようかな", choices: GenerateChoices(storage));
+                storage.Set("freetalk.lastDinnerAt", now.Date);
+            }
+            else
+            {
+                string s;
+                do
+                {
+                    s = GenerateText();
+                } while (recent.Contains(s));
 
-            await shell.PostAsync(MapVariables(s));
+                await shell.PostAsync(MapVariables(s));
 
-            recent.Add(s);
-            storage.Set("freetalk.recent", recent.TakeLast(Topics.Generics.Length).ToList());
+                recent.Add(s);
+                storage.Set("freetalk.recent", recent.TakeLast(Topics.Generics.Length).ToList());
+            }
+        }
+
+        private List<string> GenerateChoices(UserStorage.UserRecord? storage)
+        {
+            var nouns = storage.Get("freetalk.nouns", new List<string>()).ToList();
+            var verbs = storage.Get("freetalk.verbs", new List<string>()).ToList();
+            var adjectives = storage.Get("freetalk.adjectives", new List<string>()).ToList();
+
+            return Enumerable.Range(0, core.Random.Next(2, 5)).Select(_ =>
+            {
+                var dice = core.Random.Next(100);
+                return
+                    dice < 50 ? nouns.Random() :
+                    dice < 75 ? adjectives.Random() + nouns.Random() :
+                    verbs.Random() + nouns.Random();
+            }).ToList();
         }
 
         public override async Task<bool> OnTimelineAsync(IPost n, IShell shell, Server core)
