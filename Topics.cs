@@ -40,7 +40,7 @@ namespace FreeTalkPlugin
             "日頃から, $noun$を$verb$よう気をつけてる",
             "一般的に$noun$に$verb$と疲れてしまいます",
             "一般的に, $noun$は$adjective$",
-            "$adjective$noun$が$verb$する夢を見たよ",
+            "$adjective$$noun$が$verb$夢を見たよ",
             "$noun$はおいしい",
             "$noun$って何だっけ",
             "$verb$のって楽しい?",
