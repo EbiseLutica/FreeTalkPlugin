@@ -114,7 +114,7 @@ namespace FreeTalkPlugin
                 await shell.PostAsync("おやつの時間〜. 何食べよう", choices: GenerateChoices(storage));
                 storage.Set("freetalk.lastSnackTimeAt", now.Date);
             }
-            else if (win && lastLunchAt != today && hour >= 17 && hour <= 19)
+            else if (win && lastDinnerAt != today && hour >= 17 && hour <= 19)
             {
                 await shell.PostAsync("夜, 何食べようかな", choices: GenerateChoices(storage));
                 storage.Set("freetalk.lastDinnerAt", now.Date);
@@ -134,7 +134,7 @@ namespace FreeTalkPlugin
             }
         }
 
-        private List<string> GenerateChoices(UserStorage.UserRecord? storage)
+        private List<string> GenerateChoices(UserStorage.UserRecord storage)
         {
             var nouns = storage.Get("freetalk.nouns", new List<string>()).ToList();
             var verbs = storage.Get("freetalk.verbs", new List<string>()).ToList();
