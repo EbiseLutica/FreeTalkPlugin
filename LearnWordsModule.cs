@@ -61,7 +61,7 @@ namespace FreeTalkPlugin
                         if (!sender.IsAdmin) throw new AdminOnlyException();
                         var getset = args.Length >= 2 ? args[1].ToLowerInvariant() : throw new CommandException();
                         var key = args.Length >= 3 ? args[2] : throw new CommandException();
-                        var value = args.Length >= 4 ? args[3] : throw new CommandException();
+                        var value = args.Length >= 4 ? args[3] : "";
 
                         switch (key.ToLowerInvariant())
                         {
