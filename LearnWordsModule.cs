@@ -58,23 +58,24 @@ namespace FreeTalkPlugin
                     return string.Join(", ", GenerateChoices(myStorage));
                 case "config":
                     {
+                        if (!sender.IsAdmin) throw new AdminOnlyException();
                         var getset = args.Length >= 2 ? args[1].ToLowerInvariant() : throw new CommandException();
                         var key = args.Length >= 3 ? args[2] : throw new CommandException();
                         var value = args.Length >= 4 ? args[3] : throw new CommandException();
 
                         switch (key.ToLowerInvariant())
                         {
-                            // case "timerinterval":
-                            //     if (getset == "set")
-                            //     {
-                            //         if (int.TryParse(value, out var i))
-                            //         {
-                            //             myStorage.Set("freetalk.config.timerInterval", i);
-                            //             return "ok";
-                            //         }
-                            //         return "interger value is required";
-                            //     }
-                            //     return myStorage.Get("freetalk.config.timerInterval", 0).ToString();
+                            case "pollratio":
+                                if (getset == "set")
+                                {
+                                    if (int.TryParse(value, out var i))
+                                    {
+                                        myStorage.Set("freetalk.config.pollRatio", i);
+                                        return "ok";
+                                    }
+                                    return "interger value is required";
+                                }
+                                return myStorage.Get("freetalk.config.pollRatio", 30).ToString();
                             default:
                                 return $"{key} is not a valid sub-command";
                         }
@@ -90,6 +91,7 @@ namespace FreeTalkPlugin
             var storage = core.GetMyStorage();
 
             var recent = storage.Get("freetalk.recent", new List<string>());
+            var pollRatio = storage.Get("freetalk.config.pollRatio", 30);
             var now = DateTime.Now;
             var today = now.Date;
             var hour = now.Hour;
@@ -98,8 +100,7 @@ namespace FreeTalkPlugin
             var lastSnackTimeAt = storage.Get("freetalk.lastSnackTimeAt", DateTime.MinValue.Date);
             var lastDinnerAt = storage.Get("freetalk.lastDinnerAt", DateTime.MinValue.Date);
             // ごはん投票は、毎tickごと抽選する
-            // 10%の確率で当選し、アンケートする
-            var win = core.Random.Next(100) <= 10;
+            var win = core.Random.Next(100) < pollRatio;
 
             if (win && lastBreakfastAt != today && hour >= 7 && hour <= 10)
             {
