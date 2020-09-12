@@ -238,8 +238,16 @@ namespace FreeTalkPlugin
                     if (noun != null)
                     {
                         noun += current.pos == "接尾辞" ? current.baseform : null;
-                        nouns.Add(noun);
-                        logger.Info($"Remembered '{noun}' as a noun.");
+
+                        if (!noun.IsMatch(@"^[a-z\-_0-9]$"))
+                        {
+                            nouns.Add(noun);
+                            logger.Info($"Remembered '{noun}' as a noun.");
+                        }
+                        else
+                        {
+                            logger.Info($"Skipped '{noun}'");
+                        }
                         prefix = null;
                         noun = null;
                     }
@@ -262,8 +270,15 @@ namespace FreeTalkPlugin
                 else if (current.pos == "助動詞" && current.baseform == "する")
                 {
                     noun = noun + current.baseform;
-                    verbs.Add("サ変する," + noun);
-                    logger.Info($"Remembered '{noun}' as a verb.");
+                    if (!noun.IsMatch(@"^[a-z\-_0-9]$"))
+                    {
+                        verbs.Add("サ変する," + noun);
+                        logger.Info($"Remembered '{noun}' as a verb.");
+                    }
+                    else
+                    {
+                        logger.Info($"Skipped '{noun}'");
+                    }
                     prefix = null;
                     noun = null;
                 }
@@ -284,8 +299,15 @@ namespace FreeTalkPlugin
 
             if (noun != null)
             {
-                nouns.Add(noun);
-                logger.Info($"Remembered '{noun}' as a noun.");
+                if (!noun.IsMatch(@"^[a-z\-_0-9]+$"))
+                {
+                    nouns.Add(noun);
+                    logger.Info($"Remembered '{noun}' as a noun.");
+                }
+                else
+                {
+                    logger.Info($"Skipped '{noun}'");
+                }
             }
 
             myStorage.Set("freetalk.nouns", nouns.Distinct().ToList());
