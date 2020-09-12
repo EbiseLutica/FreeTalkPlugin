@@ -310,7 +310,7 @@ namespace FreeTalkPlugin
                 }
             }
 
-            const int limit = 50;
+            const int limit = 200;
             myStorage.Set("freetalk.nouns", nouns.Distinct().TakeLast(limit).ToList());
             myStorage.Set("freetalk.verbs", verbs.Distinct().TakeLast(limit).ToList());
             myStorage.Set("freetalk.adjectives", adjectives.Distinct().TakeLast(limit).ToList());
