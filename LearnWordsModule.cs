@@ -52,7 +52,7 @@ namespace FreeTalkPlugin
                 case "gen":
                 case "generate":
                     return MapVariables(GenerateText());
-                case "zoniac":
+                case "zodiac":
                     return GetJapaneseZodiacOf(DateTime.Now.Year);
                 case "word":
                     return string.Join(", ", GenerateChoices(myStorage));
@@ -146,10 +146,15 @@ namespace FreeTalkPlugin
             return Enumerable.Range(0, core.Random.Next(2, 5)).Select(_ =>
             {
                 var dice = core.Random.Next(100);
+                // 40% 名詞
+                // 20% 形容詞+名詞
+                // 20% 動詞+名詞
+                // 20% 動詞+形容詞+名詞
                 return
-                    dice < 50 ? nouns.Random() :
-                    dice < 75 ? adjectives.Random() + nouns.Random() :
-                    verbs.Random() + nouns.Random();
+                    dice < 40 ? nouns.Random() :
+                    dice < 60 ? adjectives.Random() + nouns.Random() :
+                    dice < 80 ? verbs.Random().Split(',')[1] + nouns.Random() :
+                    verbs.Random().Split(',')[1] + adjectives.Random() + nouns.Random();
             }).ToList();
         }
 
