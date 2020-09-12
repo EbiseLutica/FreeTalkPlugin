@@ -218,7 +218,7 @@ namespace FreeTalkPlugin
                     );
                 }).ToArray();
 
-            var nouns = myStorage.Get("freetalk.nouns", new List<string>()).ToList();
+            var nouns = myStorage.Get("freetalk.nouns", new List<string>()).Where(t => !t.IsMatch(@"^[a-z\-_0-9]$")).ToList();
             var verbs = myStorage.Get("freetalk.verbs", new List<string>()).ToList();
             var adjectives = myStorage.Get("freetalk.adjectives", new List<string>()).ToList();
             string? prefix = null;
