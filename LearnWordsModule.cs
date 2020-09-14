@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -425,6 +425,7 @@ namespace FreeTalkPlugin
                         "noun" => nouns.Random(),
                         "verb" => verbs.Random().Split(',')[1],
                         "adjective" => adjectives.Random(),
+                        "!adjective" => adjectives.Random()[0..^1] + "くない",
                         "zodiac" => GetJapaneseZodiacOf(year),
                         "nextZodiac" => GetJapaneseZodiacOf(year + 1),
                         "year" => year.ToString(),

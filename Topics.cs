@@ -2,6 +2,7 @@
  * パターン内に次の文字列を入れると、それぞれ展開処理がなされる
  * $noun$ 名詞
  * $adjective$ 形容詞
+ * $!adjective$ 形容詞の否定形
  * $verb$ 動詞
  * $zodiac$ 今年の干支
  * $nextZodiac$ 来年の干支
@@ -24,6 +25,7 @@ namespace FreeTalkPlugin
             // ランダム
             "風邪を引いたら$noun$を食べると良いらしい",
             "風邪を引いたら$adjective$$noun$を食べると良いらしい",
+            "風邪を引いたら$!adjective$$noun$を食べると良いらしい",
             "$noun$の仕組みをもっと理解すれば, 私も一人前になれるかな",
             "$noun$は苦手",
             "$verb$のは苦手",
@@ -40,6 +42,7 @@ namespace FreeTalkPlugin
             "$noun$運が悪かった",
             "今日は$verb$と良いらしい",
             "$noun$は$adjective$",
+            "$noun$は$!adjective$",
             "家を出たら$noun$がほしい",
             "$noun$以外の感情がない",
             "今年こそは$noun$を$verb$って決めた",
@@ -47,13 +50,21 @@ namespace FreeTalkPlugin
             "日頃から, $noun$を$verb$よう気をつけてる",
             "一般的に$noun$に$verb$と疲れてしまいます",
             "一般的に, $noun$は$adjective$",
+            "一般的に, $noun$は$!adjective$",
             "$adjective$$noun$が$verb$夢を見たよ",
             "$noun$はおいしい",
             "$noun$って何だっけ",
             "$verb$のって楽しい?",
             "$adjective$という気持ちはどこから来るんだろう",
+            "$!adjective$という気持ちはどこから来るんだろう",
             "TLのみんなの今日のラッキーアイテムは, $noun$",
             "$noun$がない暮らしを考えると, $adjective$かもしれない",
+            "$!adjective$物って何だろう",
+            "$!adjective$$noun$を見つけちゃった",
+            "$adjective$",
+            "$!adjective$",
+            "$verb$",
+            "$noun$, $noun$, $noun$.",
             "もう$hour$か",
             "$hour$ですよ",
             "$hour,1$までには終わらせたい",
