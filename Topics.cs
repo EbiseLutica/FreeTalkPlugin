@@ -338,6 +338,15 @@ namespace FreeTalkPlugin
             "今年の目標は,$noun$を$verb$ことです",
         };
 
+        public static readonly string[] Learned =
+        {
+            "「$word$」という言葉を知った どういう意味だろう",
+            "「$word$」...覚えました",
+            "「$word$」ってどういう意味ですか?",
+            "$word$... また一つ賢くなった",
+            "新しい言葉を知った.「$word$」ってどういう意味だろ",
+        };
+
         public static readonly int Length = 
             Topics.AutumnSeason.Length +
             Topics.Generics.Length +

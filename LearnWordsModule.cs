@@ -122,6 +122,12 @@ namespace FreeTalkPlugin
                 await shell.PostAsync("夜, 何食べようかな", choices: GenerateChoices(storage));
                 storage.Set("freetalk.lastDinnerAt", now.Date);
             }
+            else if (lastLearnedWord != null)
+            {
+                if (core.Random.Next(100) < 10)
+                    await shell.PostAsync(Topics.Learned.Random().Replace("$word$", lastLearnedWord));
+                lastLearnedWord = null;
+            }
             else
             {
                 string s;
@@ -242,6 +248,7 @@ namespace FreeTalkPlugin
                         if (!noun.IsMatch(@"^[a-z\-_0-9]$"))
                         {
                             nouns.Add(noun);
+                            lastLearnedWord = noun;
                             logger.Info($"Remembered '{noun}' as a noun.");
                         }
                         else
@@ -257,6 +264,7 @@ namespace FreeTalkPlugin
                 {
                     RegisterNoun();
                     adjectives.Add(current.baseform);
+                    lastLearnedWord = current.baseform;
                     logger.Info($"Remembered '{current.baseform}' as an adjective.");
                 }
                 else if (current.pos == "接頭辞")
@@ -273,6 +281,7 @@ namespace FreeTalkPlugin
                     if (!noun.IsMatch(@"^[a-z\-_0-9]+$"))
                     {
                         verbs.Add("サ変する," + noun);
+                        lastLearnedWord = noun;
                         logger.Info($"Remembered '{noun}' as a verb.");
                     }
                     else
@@ -286,6 +295,7 @@ namespace FreeTalkPlugin
                 {
                     RegisterNoun();
                     var verb = prefix + current.baseform;
+                    lastLearnedWord = verb;
                     verbs.Add(current.group1 + "," + verb);
                     logger.Info($"Remembered '{verb}' as a verb.");
                     prefix = null;
@@ -302,6 +312,7 @@ namespace FreeTalkPlugin
                 if (!noun.IsMatch(@"^[a-z\-_0-9]+$"))
                 {
                     nouns.Add(noun);
+                    lastLearnedWord = noun;
                     logger.Info($"Remembered '{noun}' as a noun.");
                 }
                 else
@@ -394,5 +405,6 @@ namespace FreeTalkPlugin
         private readonly Timer timer;
         private Server? core;
         private IShell? shell;
+        private string? lastLearnedWord = null;
     }
 }
