@@ -80,6 +80,11 @@ namespace FreeTalkPlugin
                                 return $"{key} is not a valid sub-command";
                         }
                     }
+                case "var":
+                    if (!sender.IsAdmin) throw new AdminOnlyException();
+                    if (args.Length!= 2)
+                        throw new CommandException();
+                    return MapVariables("$" + args[1] + "$");
                 default:
                     throw new CommandException();
             }
@@ -378,17 +383,70 @@ namespace FreeTalkPlugin
             var verbs = myStorage.Get("freetalk.verbs", new List<string>()).ToList();
             var adjectives = myStorage.Get("freetalk.adjectives", new List<string>()).ToList();
 
-            return Regex.Replace(text, @"\$(.*?)\$", m => m.Groups[1].Value switch
+            return Regex.Replace(text, @"\$(.*?)\$", m =>
             {
-                "" => "$",
-                "noun" => nouns.Random(),
-                "verb" => verbs.Random().Split(',')[1],
-                "adjective" => adjectives.Random(),
-                "zodiac" => GetJapaneseZodiacOf(year),
-                "nextZodiac" => GetJapaneseZodiacOf(year + 1),
-                "year" => year.ToString(),
-                _ => m.Value,
+                var val = m.Groups[1].Value.Split(',');
+                if (val.Length == 0) return "";
+                var key = val[0];
+                var args = val.Skip(1).ToArray();
+                try
+                {
+                    return key switch
+                    {
+                        "" => "$",
+                        "noun" => nouns.Random(),
+                        "verb" => verbs.Random().Split(',')[1],
+                        "adjective" => adjectives.Random(),
+                        "zodiac" => GetJapaneseZodiacOf(year),
+                        "nextZodiac" => GetJapaneseZodiacOf(year + 1),
+                        "year" => year.ToString(),
+                        "rnd" => core.Random.Next(int.Parse(args[0]), int.Parse(args[1])).ToString(),
+                        "hour" => GetHour(args.Length == 0 ? (int?)null : int.Parse(args[0])),
+                        "like" => PickNicknameOf(Rating.Like),
+                        "bestFriend" => PickNicknameOf(Rating.BestFriend),
+                        "partner" => PickNicknameOf(Rating.Partner),
+                        "nickname" => PickNickname(),
+                        _ => m.Value,
+                    };
+                }
+                catch (Exception e)
+                {
+                    logger.Error($"{e.GetType().Name}: {e.Message}");
+                    logger.Error(e.StackTrace);
+                    return m.Value;
+                }
             });
+        }
+
+        private string GetHour(int? hour)
+        {
+            var now = DateTime.Now;
+            var (h, m) = (now.Hour + hour, now.Minute);
+            return
+                m < 25 ? h + "時" :
+                m < 36 ? h + "時半" : (h + 1) + "時";
+        }
+
+        private string PickNicknameOf(Rating rat)
+        {
+            var pickedUser = core.Storage.Records
+                .Where(r => core.GetRatingOf(r.Key) == rat)
+                .Where(r => r.Value.Has(StorageKey.Nickname))
+                .Random().Key;
+
+            if (pickedUser == null) return "だれか";
+            return core.Storage[pickedUser].Get(StorageKey.Nickname, "");
+        }
+
+        private string PickNickname()
+        {
+            var name = core.Storage.Records
+                .Where(r => r.Value.Has(StorageKey.Nickname))
+                .Select(r => r.Value.Get(StorageKey.Nickname, ""))
+                .Random();
+
+            if (name == null) return "だれか";
+            return name;
         }
 
         private static readonly char[] ZodiacTable = "子丑寅卯辰巳午未申酉戌亥".ToCharArray();
