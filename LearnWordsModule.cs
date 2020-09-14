@@ -421,7 +421,7 @@ namespace FreeTalkPlugin
         private string GetHour(int? hour)
         {
             var now = DateTime.Now;
-            var (h, m) = (now.Hour + hour, now.Minute);
+            var (h, m) = (now.Hour + (hour ?? 0), now.Minute);
             return
                 m < 25 ? h + "時" :
                 m < 36 ? h + "時半" : (h + 1) + "時";
