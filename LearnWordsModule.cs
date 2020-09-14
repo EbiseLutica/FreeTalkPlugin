@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -33,8 +33,7 @@ namespace FreeTalkPlugin
         {
             // 下ネタ回避のために Citrine を参照する
             NgWords = new HarassmentHandlerModule().NgWords.ToList();
-            // 15分に1投稿
-            timer = new Timer(1000 * 60 * 30);
+            timer = new Timer(1000);
             timer.Elapsed += OnElapsed;
             timer.Start();
             logger.Info($"Installed LearnWordsModule with {Topics.Length} sentences");
@@ -73,11 +72,23 @@ namespace FreeTalkPlugin
                                         myStorage.Set("freetalk.config.pollRatio", i);
                                         return "ok";
                                     }
-                                    return "interger value is required";
+                                    return "整数値を指定して";
                                 }
                                 return myStorage.Get("freetalk.config.pollRatio", 30).ToString();
+                            case "talkratio":
+                                if (getset == "set")
+                                {
+                                    if (float.TryParse(value, out var f))
+                                    {
+                                        if (f < 60) return "60秒以下にしてほしい";
+                                        myStorage.Set("freetalk.config.talkRatio", f);
+                                        return "ok";
+                                    }
+                                    return "実数値を指定して";
+                                }
+                                return myStorage.Get("freetalk.config.talkRatio", 3600f).ToString();
                             default:
-                                return $"{key} is not a valid sub-command";
+                                return $"{key} は正しいサブコマンドではないみたい";
                         }
                     }
                 case "var":
@@ -94,6 +105,23 @@ namespace FreeTalkPlugin
         {
             if (shell == null || core == null) return;
             var storage = core.GetMyStorage();
+            var lastTalkedAt = storage.Get("freetalk.lastTalkedAt", DateTimeOffset.MinValue);
+            var now = DateTimeOffset.Now;
+            if (lastTalkedAt == now)
+            {
+                lastTalkedAt = DateTimeOffset.Now;
+                storage.Set("freetalk.lastTalkedAt", lastTalkedAt);
+            }
+
+            if (now - lastTalkedAt >= TimeSpan.FromSeconds(storage.Get("freetalk.config.talkRatio", 3600f)))
+            {
+                await Talk(storage);
+                storage.Set("freetalk.lastTalkedAt", now);
+            }
+        }
+
+        private async Task Talk(UserStorage.UserRecord storage)
+        {
 
             var recent = storage.Get("freetalk.recent", new List<string>());
             var pollRatio = storage.Get("freetalk.config.pollRatio", 30);
