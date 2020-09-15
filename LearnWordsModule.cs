@@ -103,7 +103,8 @@ namespace FreeTalkPlugin
 
         private async void OnElapsed(object sender, ElapsedEventArgs e)
         {
-            if (shell == null || core == null) return;
+            if (locked || shell == null || core == null) return;
+            locked = true;
             var storage = core.GetMyStorage();
             var lastTalkedAt = storage.Get("freetalk.lastTalkedAt", DateTimeOffset.MinValue);
             var now = DateTimeOffset.Now;
@@ -118,11 +119,11 @@ namespace FreeTalkPlugin
                 await Talk(storage);
                 storage.Set("freetalk.lastTalkedAt", now);
             }
+            locked = false;
         }
 
         private async Task Talk(UserStorage.UserRecord storage)
         {
-
             var recent = storage.Get("freetalk.recent", new List<string>());
             var pollRatio = storage.Get("freetalk.config.pollRatio", 30);
             var now = DateTime.Now;
@@ -493,5 +494,6 @@ namespace FreeTalkPlugin
         private Server? core;
         private IShell? shell;
         private string? lastLearnedWord = null;
+        private bool locked;
     }
 }
