@@ -80,6 +80,8 @@ namespace FreeTalkPlugin
             "$bestFriend$好き",
             "$like$はもっと私に構って",
             "$partner$のおかげで頑張れてます",
+            "$noun$って$adjective$よね. 私も$noun$みたいになりたい",
+            "$partner$が$verb$夢を見てしまった",
 
             // 独り言
             "根拠のない自信に満ち溢れている人を見ると, 不安になる",
