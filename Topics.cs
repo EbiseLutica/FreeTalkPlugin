@@ -382,18 +382,86 @@ namespace FreeTalkPlugin
             "新しい言葉を知った.「$word$」ってどういう意味だろ",
         };
 
-        public static readonly int Length = 
-            Topics.AutumnSeason.Length +
-            Topics.Generics.Length +
-            Topics.HalloweenSeason.Length +
-            Topics.HolidaySeason.Length +
-            Topics.NewYearSeason.Length +
-            Topics.RainySeason.Length +
-            Topics.SpringSeason.Length +
-            Topics.SummerSeason.Length +
-            Topics.TanabataSeason.Length +
-            Topics.WinterSeason.Length +
-            Topics.YearEndSeason.Length;
+        public static readonly string[] FridayDayTopic =
+        {
+            "明日は休日. そう思って今日も頑張る",
+            "華金! 帰ったら飲むよ〜.",
+            "休日が近い! そう思うと早く仕事終わらせたくなる",
+            "今週の土曜は$verb$かー",
+        };
 
+        public static readonly string[] FridayNightTopic =
+        {
+            "華金! 飲むぞ飲むぞ",
+            "このまま寝れば休日が来る",
+            "この休みは$noun$探しの旅に出る予定",
+        };
+
+        public static readonly string[] SaturdayDayTopic =
+        {
+            "休日はどうしてもゴロゴロしてしまう",
+            "仕事中はあれだけ休日の予定を立てていたのに...どうしてもだらけてしまう",
+            "気合出して、$verb$か",
+            "休みの日は趣味に打ち込むよ",
+            "今日は休日です",
+        };
+
+        public static readonly string[] SaturdayNightTopic =
+        {
+            "正気のサタデーナイト... なんて",
+            "休日はどうしてもゴロゴロしてしまう",
+            "仕事中はあれだけ休日の予定を立てていたのに...どうしてもだらけてしまう",
+            "結局何もせずに1日が終わった",
+            "今日は休日です",
+            "したかったことできなかった",
+        };
+
+        public static readonly string[] SundayDayTopic =
+        {
+            "休日はどうしてもゴロゴロしてしまう",
+            "仕事中はあれだけ休日の予定を立てていたのに...どうしてもだらけてしまう",
+            "気合出して、$verb$か",
+            "休みの日は趣味に打ち込むよ",
+            "今日は休日です",
+        };
+
+        public static readonly string[] SundayNightTopic =
+        {
+            "日曜日が終わってしまう",
+            "月曜日...こないで",
+            "休日はどうしてもゴロゴロしてしまう",
+            "仕事中はあれだけ休日の予定を立てていたのに...どうしてもだらけてしまう",
+            "結局何もせずに1日が終わった",
+            "したかったことできなかった",
+            "休日の終わりは憂鬱になる",
+        };
+
+        public static readonly string[] MondayDayTopic =
+        {
+            "月曜日になっちゃった",
+            "仕事 つらい",
+            "仕事行きたくない",
+            "休日があっという間に終わっちゃった",
+        };
+
+        public static readonly int Length =
+            AutumnSeason.Length +
+            Generics.Length +
+            HalloweenSeason.Length +
+            HolidaySeason.Length +
+            NewYearSeason.Length +
+            RainySeason.Length +
+            SpringSeason.Length +
+            SummerSeason.Length +
+            TanabataSeason.Length +
+            WinterSeason.Length +
+            YearEndSeason.Length +
+            FridayDayTopic.Length +
+            FridayNightTopic.Length +
+            SaturdayDayTopic.Length +
+            SaturdayNightTopic.Length +
+            SundayDayTopic.Length +
+            SundayNightTopic.Length +
+            MondayDayTopic.Length;
     }
 }

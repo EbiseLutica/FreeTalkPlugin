@@ -401,6 +401,8 @@ namespace FreeTalkPlugin
             var year = now.Year;
             var month = now.Month;
             var day = now.Day;
+            var hour = now.Hour;
+            var wd = now.DayOfWeek;
 
             // 特殊トピック
             var specialTopic =
@@ -419,18 +421,32 @@ namespace FreeTalkPlugin
                 month >= 9 || month <= 11 ? Topics.AutumnSeason :
                 Topics.WinterSeason;
 
-            // トピックを抽選する
-            // 10% 特殊トピック（なければ季節トピック）
-            // 20% 季節トピック
-            // 70% 通常
-            var dice = core?.Random.Next(100);
-            var chosenTopic =
-                dice < 10 ? specialTopic ?? seasonTopic :
-                dice < 20 ? seasonTopic :
-                Topics.Generics;
+            // 曜日トピック
+            var weekDayTopic = 8 <= hour && hour <= 16 ? wd switch
+            { 
+                DayOfWeek.Friday => Topics.FridayDayTopic,
+                DayOfWeek.Saturday => Topics.SaturdayDayTopic,
+                DayOfWeek.Sunday => Topics.SundayDayTopic,
+                _ => null,
+            } : 17 <= hour ? wd switch
+            {
+                DayOfWeek.Friday => Topics.FridayNightTopic,
+                DayOfWeek.Saturday => Topics.SaturdayNightTopic,
+                DayOfWeek.Sunday => Topics.SundayNightTopic,
+                _ => null
+            } : null;
 
-            // 抽選したトピックの中から発言を抽選
-            return chosenTopic.Random();
+            var empty = Enumerable.Empty<string>();
+
+            // 利用可能なトピック候補
+            var picked = Topics.Generics
+                .Concat(seasonTopic)
+                .Concat(specialTopic ?? empty)
+                .Concat(weekDayTopic ?? empty)
+                .Random();
+
+            // 発言を抽選
+            return picked;
         }
 
         /// <summary>
