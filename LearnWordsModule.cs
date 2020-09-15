@@ -107,7 +107,7 @@ namespace FreeTalkPlugin
             var storage = core.GetMyStorage();
             var lastTalkedAt = storage.Get("freetalk.lastTalkedAt", DateTimeOffset.MinValue);
             var now = DateTimeOffset.Now;
-            if (lastTalkedAt == now)
+            if (lastTalkedAt == DateTimeOffset.MinValue)
             {
                 lastTalkedAt = DateTimeOffset.Now;
                 storage.Set("freetalk.lastTalkedAt", lastTalkedAt);
