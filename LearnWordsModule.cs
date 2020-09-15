@@ -57,7 +57,7 @@ namespace FreeTalkPlugin
                     // free-talk gen
                     // フリートーク文字列を生成する
                     // 自動Postと違い、こちらはダブリ補正などを行わないし、ダブリ補正に影響を与えない
-                    return MapVariables(LotteryTopic());
+                    return MapVariables(ExtractTopics().Random());
                 case "zodiac":
                     // free-talk zodiac
                     // 今年の干支を返す
@@ -196,9 +196,10 @@ namespace FreeTalkPlugin
                 // ダブリが頻発しないように、直近の抽選履歴を見てかぶらないトピックを抽選する
                 string s;
                 var count = 0;
+                var topics = ExtractTopics().ToArray();
                 do
                 {
-                    s = LotteryTopic();
+                    s = topics.Random();
                     count++;
                 } while (recent.Contains(s) && count < 100);
                 // 100回超えても被ってしまうのなら諦めて最後に試行したものを採用
@@ -206,7 +207,7 @@ namespace FreeTalkPlugin
                 await shell.PostAsync(MapVariables(s));
 
                 recent.Add(s);
-                storage.Set("freetalk.recent", recent.TakeLast(Topics.Generics.Length).ToList());
+                storage.Set("freetalk.recent", recent.TakeLast(topics.Length).ToList());
             }
             lastLearnedWord = null;
         }
@@ -393,9 +394,9 @@ namespace FreeTalkPlugin
         }
 
         /// <summary>
-        /// トピックを抽選します。
+        /// 抽選対象のトピックをピックアップします。
         /// </summary>
-        private string LotteryTopic()
+        private IEnumerable<string> ExtractTopics()
         {
             var now = DateTime.Now;
             var year = now.Year;
@@ -439,14 +440,13 @@ namespace FreeTalkPlugin
             var empty = Enumerable.Empty<string>();
 
             // 利用可能なトピック候補
-            var picked = Topics.Generics
+            var candidates = Topics.Generics
                 .Concat(seasonTopic)
                 .Concat(specialTopic ?? empty)
-                .Concat(weekDayTopic ?? empty)
-                .Random();
+                .Concat(weekDayTopic ?? empty);
 
             // 発言を抽選
-            return picked;
+            return candidates;
         }
 
         /// <summary>
