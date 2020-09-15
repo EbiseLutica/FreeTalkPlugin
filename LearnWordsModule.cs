@@ -156,25 +156,27 @@ namespace FreeTalkPlugin
                 await shell.PostAsync("夜, 何食べようかな", choices: GenerateChoices(storage));
                 storage.Set("freetalk.lastDinnerAt", now.Date);
             }
-            else if (lastLearnedWord != null)
+            else if (lastLearnedWord != null && core.Random.Next(100) < 10)
             {
-                if (core.Random.Next(100) < 10)
-                    await shell.PostAsync(Topics.Learned.Random().Replace("$word$", lastLearnedWord));
-                lastLearnedWord = null;
+                await shell.PostAsync(Topics.Learned.Random().Replace("$word$", lastLearnedWord));
             }
             else
             {
                 string s;
+                var count = 0;
                 do
                 {
                     s = GenerateText();
-                } while (recent.Contains(s));
+                    count++;
+                } while (recent.Contains(s) && count < 100);
+                // カウントが100超えたら諦めてそれをつぶやく
 
                 await shell.PostAsync(MapVariables(s));
 
                 recent.Add(s);
                 storage.Set("freetalk.recent", recent.TakeLast(Topics.Generics.Length).ToList());
             }
+            lastLearnedWord = null;
         }
 
         private List<string> GenerateChoices(UserStorage.UserRecord storage)
@@ -283,11 +285,6 @@ namespace FreeTalkPlugin
                         {
                             nouns.Add(noun);
                             lastLearnedWord = noun;
-                            logger.Info($"Remembered '{noun}' as a noun.");
-                        }
-                        else
-                        {
-                            logger.Info($"Skipped '{noun}'");
                         }
                         prefix = null;
                         noun = null;
@@ -299,7 +296,7 @@ namespace FreeTalkPlugin
                     RegisterNoun();
                     adjectives.Add(current.baseform);
                     lastLearnedWord = current.baseform;
-                    logger.Info($"Remembered '{current.baseform}' as an adjective.");
+                    logger.Debug($"Remembered '{current.baseform}' as an adjective.");
                 }
                 else if (current.pos == "接頭辞")
                 {
@@ -316,11 +313,6 @@ namespace FreeTalkPlugin
                     {
                         verbs.Add("サ変する," + noun);
                         lastLearnedWord = noun;
-                        logger.Info($"Remembered '{noun}' as a verb.");
-                    }
-                    else
-                    {
-                        logger.Info($"Skipped '{noun}'");
                     }
                     prefix = null;
                     noun = null;
@@ -331,7 +323,6 @@ namespace FreeTalkPlugin
                     var verb = prefix + current.baseform;
                     lastLearnedWord = verb;
                     verbs.Add(current.group1 + "," + verb);
-                    logger.Info($"Remembered '{verb}' as a verb.");
                     prefix = null;
                     noun = null;
                 }
@@ -347,11 +338,6 @@ namespace FreeTalkPlugin
                 {
                     nouns.Add(noun);
                     lastLearnedWord = noun;
-                    logger.Info($"Remembered '{noun}' as a noun.");
-                }
-                else
-                {
-                    logger.Info($"Skipped '{noun}'");
                 }
             }
 
