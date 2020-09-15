@@ -39,6 +39,9 @@ namespace FreeTalkPlugin
             logger.Info($"Installed LearnWordsModule with {Topics.Length} sentences");
         }
 
+        /// <summary>
+        /// コマンドのハンドリング
+        /// </summary>
         public async Task<string> OnActivatedAsync(ICommandSender sender, Server core, IShell shell, string[] args, string body)
         {
             this.shell = this.shell ?? shell;
@@ -46,16 +49,36 @@ namespace FreeTalkPlugin
 
             var subCommand = args.Length >= 1 ? args[0] : throw new CommandException();
             var myStorage = core.GetMyStorage();
+
             switch (subCommand.ToLowerInvariant())
             {
                 case "gen":
                 case "generate":
-                    return MapVariables(GenerateText());
+                    // free-talk gen
+                    // フリートーク文字列を生成する
+                    // 自動Postと違い、こちらはダブリ補正などを行わないし、ダブリ補正に影響を与えない
+                    return MapVariables(LotteryTopic());
                 case "zodiac":
+                    // free-talk zodiac
+                    // 今年の干支を返す
                     return GetJapaneseZodiacOf(DateTime.Now.Year);
                 case "word":
+                    // free-talk word
+                    // アンケートの語彙をランダム生成
                     return string.Join(", ", GenerateChoices(myStorage));
+                case "var":
+                    // free-talk var <varName>
+                    // トピックの $ で囲む変数展開記法のデバッグ用。変数展開を行って返す
+                    if (!sender.IsAdmin) throw new AdminOnlyException();
+                    if (args.Length != 2)
+                        throw new CommandException();
+                    return MapVariables("$" + args[1] + "$");
                 case "config":
+                    // free-talk config get <key>
+                    // <key> に対応するコンフィグを取得する
+
+                    // free-talk config set <key> <value>
+                    // <key> に対応するコンフィグに <value> という値をセットする
                     {
                         if (!sender.IsAdmin) throw new AdminOnlyException();
                         var getset = args.Length >= 2 ? args[1].ToLowerInvariant() : throw new CommandException();
@@ -91,29 +114,31 @@ namespace FreeTalkPlugin
                                 return $"{key} は正しいサブコマンドではないみたい";
                         }
                     }
-                case "var":
-                    if (!sender.IsAdmin) throw new AdminOnlyException();
-                    if (args.Length!= 2)
-                        throw new CommandException();
-                    return MapVariables("$" + args[1] + "$");
                 default:
                     throw new CommandException();
             }
         }
 
+        /// <summary>
+        /// タイマーのハンドリング。1秒ごとに実行される
+        /// </summary>
         private async void OnElapsed(object sender, ElapsedEventArgs e)
         {
             if (locked || shell == null || core == null) return;
+            // 非同期実行を考慮してロックする
             locked = true;
+
             var storage = core.GetMyStorage();
-            var lastTalkedAt = storage.Get("freetalk.lastTalkedAt", DateTimeOffset.MinValue);
             var now = DateTimeOffset.Now;
+            var lastTalkedAt = storage.Get("freetalk.lastTalkedAt", DateTimeOffset.MinValue);
+
             if (lastTalkedAt == DateTimeOffset.MinValue)
             {
                 lastTalkedAt = DateTimeOffset.Now;
                 storage.Set("freetalk.lastTalkedAt", lastTalkedAt);
             }
 
+            // 前回発言時から設定した時間経過していれば処理実行
             if (now - lastTalkedAt >= TimeSpan.FromSeconds(storage.Get("freetalk.config.talkRatio", 3600f)))
             {
                 await Talk(storage);
@@ -122,17 +147,23 @@ namespace FreeTalkPlugin
             locked = false;
         }
 
+        /// <summary>
+        /// トークを生成し投稿
+        /// </summary>
         private async Task Talk(UserStorage.UserRecord storage)
         {
             var recent = storage.Get("freetalk.recent", new List<string>());
             var pollRatio = storage.Get("freetalk.config.pollRatio", 30);
+
             var now = DateTime.Now;
             var today = now.Date;
             var hour = now.Hour;
+
             var lastBreakfastAt = storage.Get("freetalk.lastBreakfastAt", DateTime.MinValue.Date);
             var lastLunchAt = storage.Get("freetalk.lastLunchAt", DateTime.MinValue.Date);
             var lastSnackTimeAt = storage.Get("freetalk.lastSnackTimeAt", DateTime.MinValue.Date);
             var lastDinnerAt = storage.Get("freetalk.lastDinnerAt", DateTime.MinValue.Date);
+
             // ごはん投票は、毎tickごと抽選する
             var win = core.Random.Next(100) < pollRatio;
 
@@ -162,14 +193,15 @@ namespace FreeTalkPlugin
             }
             else
             {
+                // ダブリが頻発しないように、直近の抽選履歴を見てかぶらないトピックを抽選する
                 string s;
                 var count = 0;
                 do
                 {
-                    s = GenerateText();
+                    s = LotteryTopic();
                     count++;
                 } while (recent.Contains(s) && count < 100);
-                // カウントが100超えたら諦めてそれをつぶやく
+                // 100回超えても被ってしまうのなら諦めて最後に試行したものを採用
 
                 await shell.PostAsync(MapVariables(s));
 
@@ -179,6 +211,9 @@ namespace FreeTalkPlugin
             lastLearnedWord = null;
         }
 
+        /// <summary>
+        /// アンケート用の選択肢を生成
+        /// </summary>
         private List<string> GenerateChoices(UserStorage.UserRecord storage)
         {
             var nouns = storage.Get("freetalk.nouns", new List<string>()).ToList();
@@ -200,69 +235,52 @@ namespace FreeTalkPlugin
             }).ToList();
         }
 
+        /// <summary>
+        /// 学習
+        /// </summary>
         public override async Task<bool> OnTimelineAsync(IPost n, IShell shell, Server core)
         {
             this.shell = this.shell ?? shell;
             this.core = this.core ?? core;
 
-            var key = Environment.GetEnvironmentVariable("YAHOO_API_KEY");
+            if (!(Environment.GetEnvironmentVariable("YAHOO_API_KEY") is string key))
+            {
+                logger.Warn("Yahoo API Key is not set!");
+                return false;
+            }
+
             var t = n.Text;
+            var myStorage = core.GetMyStorage();
 
             var now = DateTimeOffset.UtcNow;
-
-            var myStorage = core.GetMyStorage();
             var last = myStorage.Get("freetalk.lastLearnedAt", DateTimeOffset.MinValue);
 
             // 前回学習から30秒経過していなければ学習しない
             if ((now - last).TotalSeconds < 30) return false;
-
             // 本文無し / メンションを含む / NGワードを含む　なら学習しない
             if (t == null || t.ContainsMentions() || ContainsNgWord(t)) return false;
             // フォロワー限定/ダイレクトなどであれば学習しない
             if (n.Visiblity != Visibility.Public && n.Visiblity == Visibility.Limited) return false;
             // スラッシュコマンドであれば学習しない
             if (t.StartsWith("/")) return false;
-
             // URLを除外
             t = Regex.Replace(t, @"^https?\:\/\/[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*(\/?)([a-zA-Z0-9\-\.\?\,\'\/\\\+&%\$#_]*)?$", "");
 
-            if (key == null)
-            {
-                logger.Warn("Yahoo API Key is not set!");
-                return false;
-            }
+            await LearnAsync(t, myStorage, now, key);
+            return false;
+        }
 
-            // 形態素解析 API を呼ぶ
-            var res = await Server.Http.PostAsync("https://jlp.yahooapis.jp/MAService/V1/parse", new FormUrlEncodedContent(Helper.BuildKeyValues(
-                ("appId", key),
-                ("sentence", t),
-                ("response", "feature")
-            )));
-            
-            var text = await res.Content.ReadAsStringAsync();
-            var doc = XDocument.Parse(text);
-            myStorage.Set("freetalk.lastLearnedAt", now);
+        /// <summary>
+        /// 文法を学習します。
+        /// </summary>
+        private async Task LearnAsync(string text, UserStorage.UserRecord storage, DateTimeOffset now, string apiKey)
+        {
+            var result = await AnalysisAsync(apiKey, text);
+            storage.Set("freetalk.lastLearnedAt", now);
 
-            // XML を解析しデータ処理
-            (string? surface, string? reading, string? pos, string? baseform, string? group1, string? group2)[] result = doc.Descendants("{urn:yahoo:jp:jlp}word")
-                .Select(w =>
-                {
-                    var feature = w.Element("{urn:yahoo:jp:jlp}feature")?.Value ?? "";
-                    var splitted = feature.Split(',');
-
-                    return (
-                        splitted.Length >= 4 && splitted[3] == "*" ? null : splitted[3],
-                        splitted.Length >= 5 && splitted[4] == "*" ? null : splitted[4],
-                        splitted.Length >= 1 && splitted[0] == "*" ? null : splitted[0],
-                        splitted.Length >= 6 && splitted[5] == "*" ? null : splitted[5],
-                        splitted.Length >= 2 && splitted[1] == "*" ? null : splitted[1],
-                        splitted.Length >= 3 && splitted[2] == "*" ? null : splitted[2]
-                    );
-                }).ToArray();
-
-            var nouns = myStorage.Get("freetalk.nouns", new List<string>()).Where(t => !t.IsMatch(@"^[a-z\-_0-9]+$")).ToList();
-            var verbs = myStorage.Get("freetalk.verbs", new List<string>()).ToList();
-            var adjectives = myStorage.Get("freetalk.adjectives", new List<string>()).ToList();
+            var nouns = storage.Get("freetalk.nouns", new List<string>()).Where(t => !t.IsMatch(@"^[a-z\-_0-9]+$")).ToList();
+            var verbs = storage.Get("freetalk.verbs", new List<string>()).ToList();
+            var adjectives = storage.Get("freetalk.adjectives", new List<string>()).ToList();
             string? prefix = null;
             string? noun = null;
 
@@ -291,44 +309,42 @@ namespace FreeTalkPlugin
                     }
                 }
 
-                if (current.pos == "形容詞" && current.baseform != null)
+                switch (current.pos)
                 {
-                    RegisterNoun();
-                    adjectives.Add(current.baseform);
-                    lastLearnedWord = current.baseform;
-                    logger.Debug($"Remembered '{current.baseform}' as an adjective.");
-                }
-                else if (current.pos == "接頭辞")
-                {
-                    prefix = (prefix ?? "") + current.baseform;
-                }
-                else if (current.pos == "名詞")
-                {
-                    noun = noun + current.baseform;
-                }
-                else if (current.pos == "助動詞" && current.baseform == "する")
-                {
-                    noun = noun + current.baseform;
-                    if (!noun.IsMatch(@"^[a-z\-_0-9]+$"))
-                    {
-                        verbs.Add("サ変する," + noun);
-                        lastLearnedWord = noun;
-                    }
-                    prefix = null;
-                    noun = null;
-                }
-                else if (current.pos == "動詞")
-                {
-                    RegisterNoun();
-                    var verb = prefix + current.baseform;
-                    lastLearnedWord = verb;
-                    verbs.Add(current.group1 + "," + verb);
-                    prefix = null;
-                    noun = null;
-                }
-                else
-                {
-                    RegisterNoun();
+                    case "形容詞" when current.baseform != null:
+                        RegisterNoun();
+                        adjectives.Add(current.baseform);
+                        lastLearnedWord = current.baseform;
+                        break;
+                    case "接頭辞":
+                        prefix = (prefix ?? "") + current.baseform;
+                        break;
+                    case "名詞":
+                        noun = noun + current.baseform;
+                        break;
+                    case "助動詞" when current.baseform == "する":
+                        noun = noun + current.baseform;
+                        if (!noun.IsMatch(@"^[a-z\-_0-9]+$"))
+                        {
+                            verbs.Add("サ変する," + noun);
+                            lastLearnedWord = noun;
+                        }
+                        prefix = null;
+                        noun = null;
+                        break;
+                    case "動詞":
+                        {
+                            RegisterNoun();
+                            var verb = prefix + current.baseform;
+                            lastLearnedWord = verb;
+                            verbs.Add(current.group1 + "," + verb);
+                            prefix = null;
+                            noun = null;
+                            break;
+                        }
+                    default:
+                        RegisterNoun();
+                        break;
                 }
             }
 
@@ -342,14 +358,44 @@ namespace FreeTalkPlugin
             }
 
             const int limit = 200;
-            myStorage.Set("freetalk.nouns", nouns.Distinct().TakeLast(limit).ToList());
-            myStorage.Set("freetalk.verbs", verbs.Distinct().TakeLast(limit).ToList());
-            myStorage.Set("freetalk.adjectives", adjectives.Distinct().TakeLast(limit).ToList());
-
-            return false;
+            storage.Set("freetalk.nouns", nouns.Distinct().TakeLast(limit).ToList());
+            storage.Set("freetalk.verbs", verbs.Distinct().TakeLast(limit).ToList());
+            storage.Set("freetalk.adjectives", adjectives.Distinct().TakeLast(limit).ToList());
         }
 
-        private string GenerateText()
+        private static async Task<(string? surface, string? reading, string? pos, string? baseform, string? group1, string? group2)[]> AnalysisAsync(string key, string t)
+        {
+            // 形態素解析 API を呼ぶ
+            var res = await Server.Http.PostAsync("https://jlp.yahooapis.jp/MAService/V1/parse", new FormUrlEncodedContent(Helper.BuildKeyValues(
+                ("appId", key),
+                ("sentence", t),
+                ("response", "feature")
+            )));
+            var text = await res.Content.ReadAsStringAsync();
+            var doc = XDocument.Parse(text);
+
+            // XML を解析しデータ処理
+            return doc.Descendants("{urn:yahoo:jp:jlp}word")
+                .Select(w =>
+                {
+                    var feature = w.Element("{urn:yahoo:jp:jlp}feature")?.Value ?? "";
+                    var splitted = feature.Split(',');
+
+                    return (
+                        splitted.Length >= 4 && splitted[3] == "*" ? null : splitted[3],
+                        splitted.Length >= 5 && splitted[4] == "*" ? null : splitted[4],
+                        splitted.Length >= 1 && splitted[0] == "*" ? null : splitted[0],
+                        splitted.Length >= 6 && splitted[5] == "*" ? null : splitted[5],
+                        splitted.Length >= 2 && splitted[1] == "*" ? null : splitted[1],
+                        splitted.Length >= 3 && splitted[2] == "*" ? null : splitted[2]
+                    );
+                }).ToArray() as (string? surface, string? reading, string? pos, string? baseform, string? group1, string? group2)[];
+        }
+
+        /// <summary>
+        /// トピックを抽選します。
+        /// </summary>
+        private string LotteryTopic()
         {
             var now = DateTime.Now;
             var year = now.Year;
@@ -387,6 +433,9 @@ namespace FreeTalkPlugin
             return chosenTopic.Random();
         }
 
+        /// <summary>
+        /// 指定したテキストの変数を展開し、新たな文字列として返します。
+        /// </summary>
         private string MapVariables(string text)
         {
             var myStorage = core?.GetMyStorage();
@@ -434,6 +483,9 @@ namespace FreeTalkPlugin
             });
         }
 
+        /// <summary>
+        /// 現在の時をあいまいな形で返します。
+        /// </summary>
         private string GetHour(int? hour)
         {
             var now = DateTime.Now;
@@ -443,6 +495,11 @@ namespace FreeTalkPlugin
                 m < 36 ? h + "時半" : (h + 1) + "時";
         }
 
+        /// <summary>
+        /// 指定した好感度を持つユーザーのニックネームをランダムに抽出します。
+        /// ニックネームを登録していないユーザーは対象外です。
+        /// ニックネームが1つも見つからない場合は<c>"だれか</c>を返します。
+        /// </summary>
         private string PickNicknameOf(Rating rat)
         {
             var pickedUser = core.Storage.Records
@@ -454,6 +511,11 @@ namespace FreeTalkPlugin
             return core.Storage[pickedUser].Get(StorageKey.Nickname, "");
         }
 
+        /// <summary>
+        /// ユーザーのニックネームをランダムに抽出します。
+        /// ニックネームを登録していないユーザーは対象外です。
+        /// ニックネームが1つも見つからない場合は<c>"だれか</c>を返します。
+        /// </summary>
         private string PickNickname()
         {
             var name = core.Storage.Records
@@ -465,15 +527,21 @@ namespace FreeTalkPlugin
             return name;
         }
 
-        private static readonly char[] ZodiacTable = "子丑寅卯辰巳午未申酉戌亥".ToCharArray();
-
+        /// <summary>
+        /// 指定した年の干支を返します。
+        /// </summary>
         private string GetJapaneseZodiacOf(int year) => ZodiacTable[(year - 1972) % 12].ToString();
 
+        /// <summary>
+        /// テキストに NG ワードが入っているかどうか検証します。
+        /// </summary>
         private bool ContainsNgWord(string text)
         {
             text = Regex.Replace(text, @"[\s\.,/／]", "").ToLowerInvariant().ToHiragana();
             return NgWords.Any(w => text.Contains(w));
         }
+
+        private static readonly char[] ZodiacTable = "子丑寅卯辰巳午未申酉戌亥".ToCharArray();
 
         private readonly Logger logger = new Logger(nameof(LearnWordsModule));
         private readonly Timer timer;
