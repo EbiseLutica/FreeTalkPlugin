@@ -400,6 +400,7 @@ namespace FreeTalkPlugin
             "気合出して、$verb$か",
             "休みの日は趣味に打ち込むよ",
             "今日は休日です",
+            "毎日が日曜日であってほしい",
         };
 
         public static readonly string[] SundayNightTopic =
@@ -411,6 +412,7 @@ namespace FreeTalkPlugin
             "結局何もせずに1日が終わった",
             "したかったことできなかった",
             "休日の終わりは憂鬱になる",
+            "毎日が日曜日であってほしい",
         };
 
         public static readonly string[] MondayDayTopic =
