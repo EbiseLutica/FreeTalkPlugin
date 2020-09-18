@@ -119,6 +119,18 @@ namespace FreeTalkPlugin
             }
         }
 
+        public override async Task<bool> ActivateAsync(IPost n, IShell shell, Server core)
+        {
+            if (n.Text != null && n.Text.IsMatch("(何|な[んに])か(喋|しゃべ|話[しせそ])"))
+            {
+                await shell.ReplyAsync(n, MapVariables(ExtractTopics().Random()));
+                core.LikeWithLimited(n.User);
+                EconomyModule.Pay(n, shell, core);
+                return true;
+            }
+            return false;
+        }
+
         /// <summary>
         /// タイマーのハンドリング。1秒ごとに実行される
         /// </summary>
