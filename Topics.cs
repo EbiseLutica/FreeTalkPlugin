@@ -143,6 +143,12 @@ namespace FreeTalkPlugin
             "Misskey の一番好きな機能はリアクションです",
             "100% ミスキスト宣言.",
 
+            // 朝は/夜は
+            "ミスキストの朝は$adjective$",
+            "ミスキストの夜は$adjective$",
+            "$noun$の朝は$adjective$",
+            "$noun$の夜は$adjective$",
+
             // ひとこと
             "あれ?",
             "何もわからない",
