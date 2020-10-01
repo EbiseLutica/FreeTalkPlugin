@@ -32,7 +32,7 @@ namespace FreeTalkPlugin
         public LearnWordsModule()
         {
             // 下ネタ回避のために Citrine を参照する
-            NgWords = new HarassmentHandlerModule().NgWords.ToList();
+            harassmentHandler = new HarassmentHandlerModule();
             timer = new Timer(1000);
             timer.Elapsed += OnElapsed;
             timer.Start();
@@ -262,7 +262,7 @@ namespace FreeTalkPlugin
                 return false;
             }
 
-            var t = n.Text;
+            var t = n.Text ?? n.Repost?.Text;
             var myStorage = core.GetMyStorage();
 
             var now = DateTimeOffset.UtcNow;
@@ -271,7 +271,7 @@ namespace FreeTalkPlugin
             // 前回学習から30秒経過していなければ学習しない
             if ((now - last).TotalSeconds < 30) return false;
             // 本文無し / メンションを含む / NGワードを含む　なら学習しない
-            if (t == null || t.ContainsMentions() || ContainsNgWord(t)) return false;
+            if (t == null || t.ContainsMentions() || harassmentHandler.IsHarassmented(t)) return false;
             // フォロワー限定/ダイレクトなどであれば学習しない
             if (n.Visiblity != Visibility.Public && n.Visiblity == Visibility.Limited) return false;
             // スラッシュコマンドであれば学習しない
@@ -436,7 +436,7 @@ namespace FreeTalkPlugin
 
             // 曜日トピック
             var weekDayTopic = 8 <= hour && hour <= 16 ? wd switch
-            { 
+            {
                 DayOfWeek.Friday => Topics.FridayDayTopic,
                 DayOfWeek.Saturday => Topics.SaturdayDayTopic,
                 DayOfWeek.Sunday => Topics.SundayDayTopic,
@@ -572,6 +572,7 @@ namespace FreeTalkPlugin
         private static readonly char[] ZodiacTable = "子丑寅卯辰巳午未申酉戌亥".ToCharArray();
 
         private readonly Logger logger = new Logger(nameof(LearnWordsModule));
+        private readonly HarassmentHandlerModule harassmentHandler;
         private readonly Timer timer;
         private Server? core;
         private IShell? shell;
