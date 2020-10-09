@@ -103,7 +103,7 @@ namespace FreeTalkPlugin
                                 {
                                     if (float.TryParse(value, out var f))
                                     {
-                                        if (f < 60) return "60秒以下にしてほしい";
+                                        if (f < 60) return "60秒以上にしてほしい";
                                         myStorage.Set("freetalk.config.talkRatio", f);
                                         return "ok";
                                     }
