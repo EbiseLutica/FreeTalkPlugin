@@ -421,7 +421,7 @@ namespace FreeTalkPlugin
             var specialTopic =
                 month == 7 && day <= 7 ? Topics.TanabataSeason :
                 month == 10 && day == 31 ? Topics.HalloweenSeason :
-                month == 10 && (day == 24 || day == 25) ? Topics.HolidaySeason :
+                month == 12 && (day == 24 || day == 25) ? Topics.HolidaySeason :
                 month == 12 && day >= 26 ? Topics.YearEndSeason :
                 month == 1 && day <= 3 ? Topics.NewYearSeason :
                 null;
