@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Timers;
@@ -66,6 +67,15 @@ namespace FreeTalkPlugin
                     // free-talk word
                     // アンケートの語彙をランダム生成
                     return string.Join(", ", GenerateChoices(myStorage));
+                case "nativeluckyitem":
+                    // free-talk nativeluckyitem <maxPrefixCount>
+                    // シトリンのネイティブ ラッキーアイテムを生成
+                    {
+                        if (args.Length != 2)
+                            throw new CommandException();
+                        var maxPrefixCount = int.TryParse(args[1], out var i) ? i : throw new CommandException();
+                        return string.Join(", ", GenerateNativeLuckyItem(maxPrefixCount));
+                    }
                 case "var":
                     // free-talk var <varName>
                     // トピックの $ で囲む変数展開記法のデバッグ用。変数展開を行って返す
@@ -236,15 +246,17 @@ namespace FreeTalkPlugin
             return Enumerable.Range(0, core.Random.Next(2, 5)).Select(_ =>
             {
                 var dice = core.Random.Next(100);
-                // 40% 名詞
+                // 20% 名詞
                 // 20% 形容詞+名詞
                 // 20% 動詞+名詞
                 // 20% 動詞+形容詞+名詞
+                // 20% ネイティブラッキーアイテム
                 return
-                    dice < 40 ? nouns.Random() :
-                    dice < 60 ? adjectives.Random() + nouns.Random() :
-                    dice < 80 ? verbs.Random().Split(',')[1] + nouns.Random() :
-                    verbs.Random().Split(',')[1] + adjectives.Random() + nouns.Random();
+                    dice < 20 ? nouns.Random() :
+                    dice < 40 ? adjectives.Random() + nouns.Random() :
+                    dice < 60 ? verbs.Random().Split(',')[1] + nouns.Random() :
+                    dice < 80 ? verbs.Random().Split(',')[1] + adjectives.Random() + nouns.Random() :
+                    GenerateNativeLuckyItem(5);
             }).ToList();
         }
 
@@ -492,6 +504,7 @@ namespace FreeTalkPlugin
                         "!adjective" => adjectives.Random()[0..^1] + "くない",
                         "zodiac" => GetJapaneseZodiacOf(year),
                         "nextZodiac" => GetJapaneseZodiacOf(year + 1),
+                        "luckyitem" => GenerateNativeLuckyItem(5),
                         "year" => year.ToString(),
                         "rnd" => core.Random.Next(int.Parse(args[0]), int.Parse(args[1])).ToString(),
                         "hour" => GetHour(args.Length == 0 ? (int?)null : int.Parse(args[0])),
@@ -520,7 +533,7 @@ namespace FreeTalkPlugin
             var (h, m) = (now.Hour + (hour ?? 0), now.Minute);
             return
                 m < 25 ? h + "時" :
-                m < 36 ? h + "時半" : (h + 1) + "時";
+                m < 36 ? h + "時半" : h + 1 + "時";
         }
 
         /// <summary>
@@ -568,6 +581,29 @@ namespace FreeTalkPlugin
             text = Regex.Replace(text, @"[\s\.,/／]", "").ToLowerInvariant().ToHiragana();
             return NgWords.Any(w => text.Contains(w));
         }
+
+        private string GenerateNativeLuckyItem(int maxPrefixCount = 0)
+        {
+            var sb = new StringBuilder();
+            var pc = core?.Random.Next(maxPrefixCount) ?? 0;
+            if (pc > 0)
+            {
+                Enumerable.Repeat("", pc)
+                    .Select(_ => ItemPrefix())
+                    .ToList()
+                    .ForEach(s => sb.Append(s));
+            }
+            sb.Append(Item());
+            if (core?.Random.Next(100) > 70)
+            {
+                sb.Append(ItemSuffix());
+            }
+            return sb.ToString();
+        }
+
+        private static string Item() => FortuneModule.Items.Random();
+        private static string ItemPrefix() => FortuneModule.ItemPrefixes.Random();
+        private static string ItemSuffix() => FortuneModule.ItemSuffixes.Random();
 
         private static readonly char[] ZodiacTable = "子丑寅卯辰巳午未申酉戌亥".ToCharArray();
 
