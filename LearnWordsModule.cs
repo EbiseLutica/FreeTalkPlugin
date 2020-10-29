@@ -25,7 +25,7 @@ namespace FreeTalkPlugin
 
         public PermissionFlag Permission => PermissionFlag.Any;
 
-        public string Usage => "/free-talk gen\n　Generate a text\n/free-talk config get <key>\n/free-talk config set <key> <value>";
+        public string Usage => "/free-talk";
 
         public string Description => "FreeTalkPlugin Utility Command for administrators.";
 
@@ -49,6 +49,8 @@ namespace FreeTalkPlugin
 
             var subCommand = args.Length >= 1 ? args[0] : throw new CommandException();
             var myStorage = core.GetMyStorage();
+
+            var queue = myStorage.Get("freetalk.queue", new List<string>());
 
             switch (subCommand.ToLowerInvariant())
             {
@@ -75,6 +77,22 @@ namespace FreeTalkPlugin
                         var maxPrefixCount = int.TryParse(args[1], out var i) ? i : throw new CommandException();
                         return string.Join(", ", GenerateNativeLuckyItem(maxPrefixCount));
                     }
+                case "enqueue":
+                    // free-talk enqueue <text> [time]
+                    if (!sender.IsAdmin) throw new AdminOnlyException();
+
+                    return "まだ作ってない";
+
+                    if (args.Length is not 2 and not 3)
+                        throw new CommandException();
+
+                        var text = args[1];
+                        float? time = null;
+                        if (args.Length is 3)
+                        {
+                            
+                        }
+                    break;
                 case "var":
                     // free-talk var <varName>
                     // トピックの $ で囲む変数展開記法のデバッグ用。変数展開を行って返す
@@ -225,12 +243,13 @@ namespace FreeTalkPlugin
                 {
                     s = topics.Random();
                     count++;
-                } while (recent.Contains(s) && count < 100);
-                // 100回超えても被ってしまうのなら諦めて最後に試行したものを採用
+                } while (recent.Contains(s) && count < 1000);
+                // 1000回超えても被ってしまうのなら諦めて最後に試行したものを採用
 
                 await shell.PostAsync(MapVariables(s));
 
-                recent.Add(s);
+                if (!s.Contains("$"))
+                    recent.Add(s);
                 storage.Set("freetalk.recent", recent.TakeLast(topics.Length).ToList());
             }
             lastLearnedWord = null;
@@ -607,5 +626,11 @@ namespace FreeTalkPlugin
         private IShell? shell;
         private string? lastLearnedWord = null;
         private bool locked;
+    }
+
+    public struct QueueItem
+    {
+        public string Text { get; set; }
+        public float Time { get; set; }
     }
 }
