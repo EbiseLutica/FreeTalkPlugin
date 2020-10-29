@@ -16,7 +16,6 @@ namespace FreeTalkPlugin
 {
     public class LearnWordsModule : ModuleBase, ICommand
     {
-        public List<string> NgWords { get; }
 
         public string Name => "free-talk";
 
@@ -45,8 +44,8 @@ namespace FreeTalkPlugin
         /// </summary>
         public async Task<string> OnActivatedAsync(ICommandSender sender, Server core, IShell shell, string[] args, string body)
         {
-            this.shell = this.shell ?? shell;
-            this.core = this.core ?? core;
+            this.shell ??= shell;
+            this.core ??= core;
 
             var subCommand = args.Length >= 1 ? args[0] : throw new CommandException();
             var myStorage = core.GetMyStorage();
@@ -174,6 +173,9 @@ namespace FreeTalkPlugin
         /// </summary>
         private async Task Talk(UserStorage.UserRecord storage)
         {
+            if (core == null) return;
+            if (shell == null) return;
+
             var recent = storage.Get("freetalk.recent", new List<string>());
             var pollRatio = storage.Get("freetalk.config.pollRatio", 30);
 
@@ -239,13 +241,14 @@ namespace FreeTalkPlugin
         /// </summary>
         private List<string> GenerateChoices(UserStorage.UserRecord storage)
         {
+            var rnd = core?.Random ?? new Random();
             var nouns = storage.Get("freetalk.nouns", new List<string>()).ToList();
             var verbs = storage.Get("freetalk.verbs", new List<string>()).ToList();
             var adjectives = storage.Get("freetalk.adjectives", new List<string>()).ToList();
 
-            return Enumerable.Range(0, core.Random.Next(2, 5)).Select(_ =>
+            return Enumerable.Range(0, rnd.Next(2, 5)).Select(_ =>
             {
-                var dice = core.Random.Next(100);
+                var dice = rnd.Next(100);
                 // 20% 名詞
                 // 20% 形容詞+名詞
                 // 20% 動詞+名詞
@@ -265,8 +268,8 @@ namespace FreeTalkPlugin
         /// </summary>
         public override async Task<bool> OnTimelineAsync(IPost n, IShell shell, Server core)
         {
-            this.shell = this.shell ?? shell;
-            this.core = this.core ?? core;
+            this.shell ??= shell;
+            this.core ??= core;
 
             if (!(Environment.GetEnvironmentVariable("YAHOO_API_KEY") is string key))
             {
@@ -315,14 +318,14 @@ namespace FreeTalkPlugin
                 // ルール2: 接頭辞がある場合、登録時にくっつけて登録する
                 // ルール3: next が接尾辞を指す場合、登録時にくっつけて登録する
                 // ルール4: 名詞+助動詞(する)を検出した場合、動詞として登録する
-                var current = result[i];
+                var (surface, reading, pos, baseform, group1, group2) = result[i];
                 var next = i < result.Length - 1 ? result[i + 1] : default;
 
                 void RegisterNoun()
                 {
                     if (noun != null)
                     {
-                        noun += current.pos == "接尾辞" ? current.baseform : null;
+                        noun += pos == "接尾辞" ? baseform : null;
 
                         if (!noun.IsMatch(@"^[a-z\-_0-9]$"))
                         {
@@ -334,21 +337,21 @@ namespace FreeTalkPlugin
                     }
                 }
 
-                switch (current.pos)
+                switch (pos)
                 {
-                    case "形容詞" when current.baseform != null:
+                    case "形容詞" when baseform != null:
                         RegisterNoun();
-                        adjectives.Add(current.baseform);
-                        lastLearnedWord = current.baseform;
+                        adjectives.Add(baseform);
+                        lastLearnedWord = baseform;
                         break;
                     case "接頭辞":
-                        prefix = (prefix ?? "") + current.baseform;
+                        prefix = (prefix ?? "") + baseform;
                         break;
                     case "名詞":
-                        noun = noun + current.baseform;
+                        noun += baseform;
                         break;
-                    case "助動詞" when current.baseform == "する":
-                        noun = noun + current.baseform;
+                    case "助動詞" when baseform == "する":
+                        noun += baseform;
                         if (!noun.IsMatch(@"^[a-z\-_0-9]+$"))
                         {
                             verbs.Add("サ変する," + noun);
@@ -360,9 +363,9 @@ namespace FreeTalkPlugin
                     case "動詞":
                         {
                             RegisterNoun();
-                            var verb = prefix + current.baseform;
+                            var verb = prefix + baseform;
                             lastLearnedWord = verb;
-                            verbs.Add(current.group1 + "," + verb);
+                            verbs.Add(group1 + "," + verb);
                             prefix = null;
                             noun = null;
                             break;
@@ -423,7 +426,6 @@ namespace FreeTalkPlugin
         private IEnumerable<string> ExtractTopics()
         {
             var now = DateTime.Now;
-            var year = now.Year;
             var month = now.Month;
             var day = now.Day;
             var hour = now.Hour;
@@ -506,7 +508,7 @@ namespace FreeTalkPlugin
                         "nextZodiac" => GetJapaneseZodiacOf(year + 1),
                         "luckyitem" => GenerateNativeLuckyItem(5),
                         "year" => year.ToString(),
-                        "rnd" => core.Random.Next(int.Parse(args[0]), int.Parse(args[1])).ToString(),
+                        "rnd" => core?.Random.Next(int.Parse(args[0]), int.Parse(args[1])).ToString(),
                         "hour" => GetHour(args.Length == 0 ? (int?)null : int.Parse(args[0])),
                         "like" => PickNicknameOf(Rating.Like),
                         "bestFriend" => PickNicknameOf(Rating.BestFriend),
@@ -543,12 +545,12 @@ namespace FreeTalkPlugin
         /// </summary>
         private string PickNicknameOf(Rating rat)
         {
-            var pickedUser = core.Storage.Records
+            var pickedUser = core?.Storage.Records
                 .Where(r => core.GetRatingOf(r.Key) == rat)
                 .Where(r => r.Value.Has(StorageKey.Nickname))
                 .Random().Key;
 
-            if (pickedUser == null) return "だれか";
+            if (core == null || pickedUser == null) return "だれか";
             return core.Storage[pickedUser].Get(StorageKey.Nickname, "");
         }
 
@@ -559,12 +561,12 @@ namespace FreeTalkPlugin
         /// </summary>
         private string PickNickname()
         {
-            var name = core.Storage.Records
+            var name = core?.Storage.Records
                 .Where(r => r.Value.Has(StorageKey.Nickname))
                 .Select(r => r.Value.Get(StorageKey.Nickname, ""))
                 .Random();
 
-            if (name == null) return "だれか";
+            if (core == null || name == null) return "だれか";
             return name;
         }
 
@@ -572,15 +574,6 @@ namespace FreeTalkPlugin
         /// 指定した年の干支を返します。
         /// </summary>
         private string GetJapaneseZodiacOf(int year) => ZodiacTable[(year - 1972) % 12].ToString();
-
-        /// <summary>
-        /// テキストに NG ワードが入っているかどうか検証します。
-        /// </summary>
-        private bool ContainsNgWord(string text)
-        {
-            text = Regex.Replace(text, @"[\s\.,/／]", "").ToLowerInvariant().ToHiragana();
-            return NgWords.Any(w => text.Contains(w));
-        }
 
         private string GenerateNativeLuckyItem(int maxPrefixCount = 0)
         {
