@@ -485,9 +485,10 @@ namespace FreeTalkPlugin
             var empty = Enumerable.Empty<string>();
 
             // 利用可能なトピック候補
-            var candidates = Topics.Generics
+            var candidates = specialTopic != null ? (
+                core?.Random.Next(100) < 20 ? specialTopic : Topics.Generics
+            ) : Topics.Generics
                 .Concat(seasonTopic)
-                .Concat(specialTopic ?? empty)
                 .Concat(weekDayTopic ?? empty);
 
             // 発言を抽選
