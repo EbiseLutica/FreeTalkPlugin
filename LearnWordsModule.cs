@@ -290,7 +290,7 @@ namespace FreeTalkPlugin
             this.shell ??= shell;
             this.core ??= core;
 
-            if (!(Environment.GetEnvironmentVariable("YAHOO_API_KEY") is string key))
+            if (Environment.GetEnvironmentVariable("YAHOO_API_KEY") is not string key)
             {
                 logger.Warn("Yahoo API Key is not set!");
                 return false;
@@ -436,7 +436,7 @@ namespace FreeTalkPlugin
                         splitted.Length >= 2 && splitted[1] == "*" ? null : splitted[1],
                         splitted.Length >= 3 && splitted[2] == "*" ? null : splitted[2]
                     );
-                }).ToArray() as (string? surface, string? reading, string? pos, string? baseform, string? group1, string? group2)[];
+                }).ToArray();
         }
 
         /// <summary>
