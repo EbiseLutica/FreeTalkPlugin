@@ -353,7 +353,7 @@ namespace FreeTalkPlugin
         public static readonly string[] MondayDayTopic =
         {
             "月曜日が街にやってくる",
-            "仕事が始まる,
+            "仕事が始まる",
             "仕事行きたくない",
             "休日, あっという間に終わっちゃった",
         };
