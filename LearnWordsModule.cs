@@ -221,12 +221,12 @@ namespace FreeTalkPlugin
             }
             else if (win && lastSnackTimeAt != today && hour == 15)
             {
-                await shell.PostAsync("おやつの時間〜. 何食べよう", choices: GenerateChoices(storage));
+                await shell.PostAsync("おやつの時間〜．何食べよう", choices: GenerateChoices(storage));
                 storage.Set("freetalk.lastSnackTimeAt", now.Date);
             }
             else if (win && lastDinnerAt != today && hour >= 17 && hour <= 19)
             {
-                await shell.PostAsync("夜, 何食べようかな", choices: GenerateChoices(storage));
+                await shell.PostAsync("夜，何食べようかな", choices: GenerateChoices(storage));
                 storage.Set("freetalk.lastDinnerAt", now.Date);
             }
             else if (lastLearnedWord != null && core.Random.Next(100) < 10)
