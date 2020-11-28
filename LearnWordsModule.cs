@@ -248,8 +248,8 @@ namespace FreeTalkPlugin
 
                 await shell.PostAsync(MapVariables(s));
 
-                if (!s.Contains("$"))
-                    recent.Add(s);
+                // if (!s.Contains("$"))
+                recent.Add(s);
                 storage.Set("freetalk.recent", recent.TakeLast(topics.Length).ToList());
             }
             lastLearnedWord = null;
@@ -278,7 +278,7 @@ namespace FreeTalkPlugin
                     dice < 40 ? adjectives.Random() + nouns.Random() :
                     dice < 60 ? verbs.Random().Split(',')[1] + nouns.Random() :
                     dice < 80 ? verbs.Random().Split(',')[1] + adjectives.Random() + nouns.Random() :
-                    GenerateNativeLuckyItem(5);
+                    GenerateNativeLuckyItem(3);
             }).ToList();
         }
 
@@ -526,7 +526,7 @@ namespace FreeTalkPlugin
                         "!adjective" => adjectives.Random()[0..^1] + "くない",
                         "zodiac" => GetJapaneseZodiacOf(year),
                         "nextZodiac" => GetJapaneseZodiacOf(year + 1),
-                        "luckyitem" => GenerateNativeLuckyItem(5),
+                        "luckyitem" => GenerateNativeLuckyItem(3),
                         "year" => year.ToString(),
                         "rnd" => core?.Random.Next(int.Parse(args[0]), int.Parse(args[1])).ToString(),
                         "hour" => GetHour(args.Length == 0 ? (int?)null : int.Parse(args[0])),
