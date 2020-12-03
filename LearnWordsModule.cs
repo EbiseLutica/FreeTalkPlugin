@@ -464,7 +464,7 @@ namespace FreeTalkPlugin
                 month == 3 || month == 4 ? Topics.SpringSeason :
                 month == 5 || month == 6 ? Topics.RainySeason :
                 month == 7 || month == 8 ? Topics.SummerSeason :
-                month >= 9 || month <= 11 ? Topics.AutumnSeason :
+                month >= 9 && month <= 11 ? Topics.AutumnSeason :
                 Topics.WinterSeason;
 
             // 曜日トピック
