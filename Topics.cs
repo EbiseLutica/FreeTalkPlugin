@@ -211,9 +211,10 @@ namespace FreeTalkPlugin
         // クリスマス(12/24-12/25)
         public static readonly string[] HolidaySeason =
         {
-            "メリークリスマス",
-            "サンタさんって，いないの?",
+            "メリークリスマス！",
+            "みんな，クリスマスの予定はいかが？私は……秘密です。",
             "子供のときにもらったプレゼントで一番おもしろかったのは，$noun$",
+            "フライドチキンを買いに行かねば…",
             "プレゼントください",
             "ケーキおいし",
         };
@@ -239,7 +240,7 @@ namespace FreeTalkPlugin
             "$zodiac$年ですね",
             "$year$年になった自覚がない",
             "お雑煮おいし",
-            "今年の目標は,$noun$を$verb$ことです",
+            "今年の抱負は,$noun$を$verb$ことです",
         };
 
         public static readonly string[] Learned =
