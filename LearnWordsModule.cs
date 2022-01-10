@@ -35,6 +35,13 @@ namespace FreeTalkPlugin
             harassmentHandler = new HarassmentHandlerModule();
             timer = new Timer(1000);
             timer.Elapsed += OnElapsed;
+            _ = ConstructAsync();
+        }
+
+        private async Task ConstructAsync()
+        {
+            logger.Info("Fetching messages...");
+            await Topics.FetchAsync();
             timer.Start();
             logger.Info($"Installed LearnWordsModule with {Topics.Length} sentences");
         }
@@ -90,9 +97,9 @@ namespace FreeTalkPlugin
                         float? time = null;
                         if (args.Length is 3)
                         {
-                            
+
                         }
-                    break;
+                        break;
                 case "var":
                     // free-talk var <varName>
                     // トピックの $ で囲む変数展開記法のデバッグ用。変数展開を行って返す
